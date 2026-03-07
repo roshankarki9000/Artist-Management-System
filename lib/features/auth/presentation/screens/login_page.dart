@@ -24,7 +24,7 @@ class _LoginPageState extends State<LoginPage> {
         listener: (context, state) {
           state.maybeWhen(
             orElse: () => null,
-            authenticated: () => null,
+            authenticated: (user) => null,
             unauthenticated: () => null,
             error: (message) => ScaffoldMessenger.of(
               context,

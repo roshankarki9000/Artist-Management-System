@@ -1,3 +1,4 @@
+import 'package:artist_management/features/users/domain/entities/user_model/user_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../../core/error/failure/failure.dart';
@@ -11,6 +12,8 @@ abstract class AuthRepository {
     String email,
     String password,
   );
+
+  Future<EitherOr<Failure, UserModel>> getUserProfile(String id);
 
   Future<EitherOr<Failure, Session>> loginWithGoogle();
 

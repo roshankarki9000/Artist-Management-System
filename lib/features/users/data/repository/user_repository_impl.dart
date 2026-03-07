@@ -51,17 +51,36 @@ class UserRepositoryImpl implements UserRepository {
         throw Exception("Failed to create authentication user");
       }
 
-      /// 2️⃣ Insert profile
-      await supabaseService.supabase.from('users').insert({
-        "id": authUser.id,
-        "name": name,
-        "email": email,
-        "role": role,
-        "created_by": supabaseService.supabase.auth.currentUser?.id,
-        "is_active": true,
-      });
+      /// 2️⃣ Wait until trigger creates the profile
+      bool exists = false;
+      int attempts = 0;
 
-      /// 3️⃣ Send reset password email
+      while (!exists && attempts < 10) {
+        final res = await supabaseService.supabase
+            .from('users')
+            .select('id')
+            .eq('id', authUser.id)
+            .maybeSingle();
+
+        if (res != null) {
+          exists = true;
+        } else {
+          await Future.delayed(const Duration(milliseconds: 300));
+          attempts++;
+        }
+      }
+
+      if (!exists) {
+        throw Exception("User profile creation timeout");
+      }
+
+      /// 3️⃣ Update role
+      await supabaseService.supabase
+          .from('users')
+          .update({"role": role})
+          .eq("id", authUser.id);
+
+      /// 4️⃣ Send reset password email
       await supabaseService.supabase.auth.resetPasswordForEmail(
         email,
         redirectTo: 'io.supabase.flutter://reset-callback',

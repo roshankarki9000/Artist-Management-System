@@ -15,10 +15,18 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   final UserRepository repository;
 
   UserBloc(this.repository) : super(const UserState.initial()) {
-    on<_LoadUsers>(_loadUsers);
-    on<_CreateUser>(_createUser);
-    on<_UpdateUser>(_updateUser);
-    on<_DeleteUser>(_deleteUser);
+    // on<_LoadUsers>(_loadUsers);
+    // on<_CreateUser>(_createUser);
+    // on<_UpdateUser>(_updateUser);
+    // on<_DeleteUser>(_deleteUser);
+    on<UserEvent>((event, emit) async {
+      await event.map(
+        loadUsers: (e) => _loadUsers(e, emit),
+        createUser: (e) => _createUser(e, emit),
+        updateUser: (e) => _updateUser(e, emit),
+        deleteUser: (e) => _deleteUser(e, emit),
+      );
+    });
   }
 
   Future<void> _loadUsers(_LoadUsers event, Emitter<UserState> emit) async {

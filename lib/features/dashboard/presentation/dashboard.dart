@@ -1,28 +1,48 @@
-import 'package:artist_management/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:artist_management/features/auth/presentation/bloc/auth_event.dart';
+import 'package:artist_management/features/activity_log/presentation/bloc/activity_log_bloc.dart';
+import 'package:artist_management/features/artists/presentation/bloc/artist_bloc.dart';
+import 'package:artist_management/features/dashboard/widget/activities_log.dart';
+import 'package:artist_management/features/dashboard/widget/custom_activity.dart';
+import 'package:artist_management/features/dashboard/widget/custom_calender.dart';
+import 'package:artist_management/features/dashboard/widget/dashboard_app_bar.dart';
+import 'package:artist_management/features/dashboard/widget/generic_scaffold.dart';
+import 'package:artist_management/features/songs/presentation/bloc/song_bloc.dart';
+import 'package:artist_management/features/users/presentation/bloc/user_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
   @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  @override
+  void didChangeDependencies() {
+    context.read<UserBloc>().add(UserEvent.loadUsers());
+    context.read<ArtistBloc>().add(ArtistEvent.loadArtists());
+    context.read<SongBloc>().add(SongEvent.loadAllSongs());
+    context.read<ActivityBloc>().add(ActivityEvent.loadActivities());
+
+    super.didChangeDependencies();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Dashboard"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthBloc>().add(AuthEvent.logout());
-              context.go('/login');
-            },
-          ),
-        ],
+    return GenericScaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            DashboardAppBar(),
+            SizedBox(height: 20),
+            CustomCalendar(),
+            Activity(),
+            SizedBox(height: 30),
+            ActivitiesLog(),
+          ],
+        ),
       ),
-      body: const Center(child: Text("Dashboard")),
     );
   }
 }

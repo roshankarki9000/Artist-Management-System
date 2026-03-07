@@ -34,13 +34,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     CheckSession event,
     Emitter<AuthState> emit,
   ) async {
-    final user = repository.currentUser();
+    final authUser = repository.currentUser();
 
-    if (user != null) {
-      emit(const AuthState.authenticated());
-    } else {
+    if (authUser == null) {
       emit(const AuthState.unauthenticated());
+      return;
     }
+
+    final result = await repository.getUserProfile(authUser.id);
+
+    result.fold(
+      (failure) => emit(AuthState.error(failure.message)),
+      (user) => emit(AuthState.authenticated(user)),
+    );
   }
 
   Future<void> _login(Login event, Emitter<AuthState> emit) async {
@@ -48,9 +54,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     final result = await repository.login(event.email, event.password);
 
-    result.fold(
-      (failure) => emit(AuthState.error(failure.message)),
-      (_) => emit(const AuthState.authenticated()),
+    await result.fold(
+      (failure) async {
+        emit(AuthState.error(failure.message));
+      },
+      (_) async {
+        final authUser = repository.currentUser();
+
+        if (authUser == null) {
+          emit(const AuthState.unauthenticated());
+          return;
+        }
+
+        final profileResult = await repository.getUserProfile(authUser.id);
+
+        profileResult.fold(
+          (failure) => emit(AuthState.error(failure.message)),
+          (user) => emit(AuthState.authenticated(user)),
+        );
+      },
     );
   }
 
@@ -77,9 +99,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     final result = await repository.loginWithGoogle();
 
-    result.fold(
-      (failure) => emit(AuthState.error(failure.message)),
-      (_) => emit(const AuthState.authenticated()),
+    await result.fold(
+      (failure) async {
+        emit(AuthState.error(failure.message));
+      },
+      (_) async {
+        final authUser = repository.currentUser();
+
+        if (authUser == null) {
+          emit(const AuthState.unauthenticated());
+          return;
+        }
+
+        final profileResult = await repository.getUserProfile(authUser.id);
+
+        profileResult.fold(
+          (failure) => emit(AuthState.error(failure.message)),
+          (user) => emit(AuthState.authenticated(user)),
+        );
+      },
     );
   }
 

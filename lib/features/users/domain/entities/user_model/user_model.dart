@@ -7,10 +7,11 @@ part 'user_model.g.dart';
 @freezed
 abstract class UserModel with _$UserModel {
   const factory UserModel({
+    required String name,
     required String id,
     required String email,
     required String role,
-    @DateTimeConverter() DateTime? createdAt,
+    @JsonKey(name: 'created_at') @DateTimeConverter() DateTime? createdAt,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, Object?> json) =>

@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:artist_management/core/enum/roles.dart';
 import 'package:artist_management/core/services/supabase_service.dart';
 import 'package:artist_management/features/auth/domain/repository/auth_repository.dart';
+import 'package:artist_management/features/users/domain/entities/user_model/user_model.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -39,8 +39,7 @@ class AuthRepositoryImpl implements AuthRepository {
         throw Exception("Please verify your email before logging in.");
       }
 
-      await _ensureUserProfile();
-
+      /// CHECK USER PROFILE STATUS
       final profile = await supabaseService.supabase
           .from('users')
           .select()
@@ -56,6 +55,19 @@ class AuthRepositoryImpl implements AuthRepository {
     });
   }
 
+  @override
+  Future<EitherOr<Failure, UserModel>> getUserProfile(String id) {
+    return guard.run(() async {
+      final response = await supabaseService.supabase
+          .from('users')
+          .select()
+          .eq('id', id)
+          .single();
+
+      return UserModel.fromJson(response);
+    });
+  }
+
   /// ---------------- REGISTER ----------------
   @override
   Future<EitherOr<Failure, User>> register(
@@ -68,7 +80,7 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
         data: {"name": name},
-        emailRedirectTo: 'io.supabaseService.supabase.flutter://login-callback',
+        emailRedirectTo: 'io.supabase.flutter://login-callback',
       );
 
       final user = res.user;
@@ -76,43 +88,6 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user == null) {
         throw Exception("Registration failed");
       }
-
-      final existingProfile = await supabaseService.supabase
-          .from('users')
-          .select()
-          .eq('id', user.id)
-          .maybeSingle();
-
-      /// RESTORE SOFT DELETED USER
-      if (existingProfile != null) {
-        if (existingProfile['is_active'] == false) {
-          await supabaseService.supabase
-              .from('users')
-              .update({"is_active": true, "name": name})
-              .eq('id', user.id);
-        }
-
-        return user;
-      }
-
-      /// CHECK IF FIRST USER
-      final existingUsers = await supabaseService.supabase
-          .from('users')
-          .select('id')
-          .limit(1);
-
-      final isFirstUser = (existingUsers as List).isEmpty;
-
-      final role = isFirstUser ? Role.superadmin : Role.admin;
-
-      await supabaseService.supabase.from('users').insert({
-        "id": user.id,
-        "name": name,
-        "email": email,
-        "role": role.name,
-        "created_by": supabaseService.supabase.auth.currentUser?.id,
-        "is_active": true,
-      });
 
       return user;
     });
@@ -124,7 +99,7 @@ class AuthRepositoryImpl implements AuthRepository {
     return guard.run(() async {
       await supabaseService.supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: 'io.supabaseService.supabase.flutter://login-callback',
+        redirectTo: 'io.supabase.flutter://login-callback',
       );
 
       final completer = Completer<Session>();
@@ -143,14 +118,17 @@ class AuthRepositoryImpl implements AuthRepository {
 
       await sub.cancel();
 
-      await _ensureUserProfile();
-
       final user = supabaseService.supabase.auth.currentUser;
 
+      if (user == null) {
+        throw Exception("Google login failed");
+      }
+
+      /// CHECK USER PROFILE
       final profile = await supabaseService.supabase
           .from('users')
           .select()
-          .eq('id', user!.id)
+          .eq('id', user.id)
           .maybeSingle();
 
       if (profile == null || profile['is_active'] == false) {
@@ -172,54 +150,5 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   User? currentUser() {
     return supabaseService.supabase.auth.currentUser;
-  }
-
-  /// ---------------- PRIVATE HELPER ----------------
-  Future<void> _ensureUserProfile() async {
-    final user = supabaseService.supabase.auth.currentUser;
-
-    if (user == null) return;
-
-    final existing = await supabaseService.supabase
-        .from('users')
-        .select()
-        .eq('id', user.id)
-        .maybeSingle();
-
-    /// RESTORE SOFT DELETED USER
-    if (existing != null) {
-      if (existing['is_active'] == false) {
-        await supabaseService.supabase
-            .from('users')
-            .update({"is_active": true})
-            .eq('id', user.id);
-      }
-
-      return;
-    }
-
-    /// CHECK IF FIRST USER
-    final existingUsers = await supabaseService.supabase
-        .from('users')
-        .select('id')
-        .limit(1);
-
-    final isFirstUser = (existingUsers as List).isEmpty;
-
-    final role = isFirstUser ? Role.superadmin : Role.admin;
-
-    final name =
-        user.userMetadata?['full_name'] ??
-        user.userMetadata?['name'] ??
-        'Admin';
-
-    await supabaseService.supabase.from('users').insert({
-      "id": user.id,
-      "name": name,
-      "email": user.email,
-      "role": role.name,
-      "created_by": supabaseService.supabase.auth.currentUser?.id,
-      "is_active": true,
-    });
   }
 }

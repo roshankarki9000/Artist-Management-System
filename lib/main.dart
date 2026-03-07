@@ -1,6 +1,7 @@
 import 'package:artist_management/core/bloc/app_bloc_observer.dart';
 import 'package:artist_management/core/di/bloc_provider_config.dart';
 import 'package:artist_management/core/di/get_it_configs/get_it.dart';
+import 'package:artist_management/core/presentation/widgets/app_background.dart';
 import 'package:artist_management/core/router/app_router.dart';
 import 'package:artist_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:artist_management/features/auth/presentation/bloc/auth_event.dart';
@@ -60,12 +61,14 @@ class _MyAppState extends State<MyApp> {
         value: _authBloc,
         child: MaterialApp.router(
           routerConfig: _router,
-          builder: (context, child) => ConnectivityWidget(child: child!),
+          builder: (context, child) =>
+              ConnectivityWidget(child: AppBackground(child: child!)),
           debugShowCheckedModeBanner: false,
           title: 'Artist Management',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
+            scaffoldBackgroundColor: Colors.transparent,
           ),
         ),
       ),

@@ -25,7 +25,7 @@ class _RegisterPageState extends State<RegisterPage> {
         listener: (context, state) {
           state.maybeWhen(
             orElse: () => null,
-            authenticated: () => context.go('/login'),
+            authenticated: (user) => context.go('/login'),
             error: (message) => ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(message))),

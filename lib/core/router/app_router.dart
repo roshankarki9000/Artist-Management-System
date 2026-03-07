@@ -1,3 +1,4 @@
+import 'package:artist_management/core/presentation/splash/splash_page.dart';
 import 'package:artist_management/features/auth/presentation/screens/login_page.dart';
 import 'package:artist_management/features/auth/presentation/screens/oauth_callback_page.dart';
 import 'package:artist_management/features/auth/presentation/screens/register_page.dart';
@@ -13,7 +14,8 @@ import '../utils/go_router_refresh_stream.dart';
 class AppRouter {
   static GoRouter createRouter(AuthBloc authBloc) {
     final router = GoRouter(
-      initialLocation: '/login',
+      initialLocation: '/splash',
+
       refreshListenable: GoRouterRefreshStream(authBloc.stream),
 
       redirect: (context, state) {
@@ -24,10 +26,15 @@ class AppRouter {
           return '/login-callback';
         }
 
+        /// allow splash to stay until animation completes
+        if (location == '/splash') {
+          return null;
+        }
+
         final authState = authBloc.state;
 
         final loggedIn = authState.maybeWhen(
-          authenticated: () => true,
+          authenticated: (user) => true,
           orElse: () => false,
         );
 
@@ -58,7 +65,12 @@ class AppRouter {
       },
 
       routes: [
-        GoRoute(path: '/', redirect: (_, _) => '/login'),
+        GoRoute(path: '/', redirect: (_, _) => '/splash'),
+
+        GoRoute(
+          path: '/splash',
+          builder: (context, state) => const SplashPage(),
+        ),
 
         GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
 
@@ -84,7 +96,7 @@ class AppRouter {
       ],
     );
 
-    /// 🔹 HANDLE SUPABASE PASSWORD RECOVERY
+    /// 🔹 HANDLE SUPABASE PASSWORD RECOVERY (UNCHANGED)
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final event = data.event;
 

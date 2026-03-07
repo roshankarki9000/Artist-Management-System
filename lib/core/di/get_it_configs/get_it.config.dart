@@ -22,10 +22,18 @@ import 'package:artist_management/core/services/connectivity_service.dart'
     as _i881;
 import 'package:artist_management/core/services/supabase_service.dart' as _i957;
 import 'package:artist_management/core/utils/repository_guard.dart' as _i432;
+import 'package:artist_management/features/activity_log/data/repository/activity_repository_impl.dart'
+    as _i837;
+import 'package:artist_management/features/activity_log/domain/repositories/activity_repository.dart'
+    as _i115;
+import 'package:artist_management/features/activity_log/presentation/bloc/activity_log_bloc.dart'
+    as _i133;
 import 'package:artist_management/features/artists/data/repository/artists_repository.dart'
     as _i537;
 import 'package:artist_management/features/artists/domain/repository/artists_repository_impl.dart'
     as _i291;
+import 'package:artist_management/features/artists/presentation/bloc/artist_bloc.dart'
+    as _i414;
 import 'package:artist_management/features/auth/data/repositories/auth_repository_impl.dart'
     as _i101;
 import 'package:artist_management/features/auth/domain/repository/auth_repository.dart'
@@ -36,6 +44,10 @@ import 'package:artist_management/features/connectivity/bloc/connectivity_bloc.d
     as _i805;
 import 'package:artist_management/features/songs/data/repository/songs_repository.dart'
     as _i657;
+import 'package:artist_management/features/songs/domain/repository/songs_repository_impl.dart'
+    as _i435;
+import 'package:artist_management/features/songs/presentation/bloc/song_bloc.dart'
+    as _i333;
 import 'package:artist_management/features/users/data/repository/user_repository_impl.dart'
     as _i267;
 import 'package:artist_management/features/users/domain/repositories/user_repository.dart'
@@ -85,6 +97,18 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i249.RetryManager>(),
       ),
     );
+    gh.lazySingleton<_i115.ActivityRepository>(
+      () => _i837.ActivityRepositoryImpl(
+        gh<_i957.SupabaseService>(),
+        gh<_i432.RepositoryGuard>(),
+      ),
+    );
+    gh.lazySingleton<_i657.SongRepository>(
+      () => _i435.SongRepositoryImpl(
+        gh<_i957.SupabaseService>(),
+        gh<_i432.RepositoryGuard>(),
+      ),
+    );
     gh.lazySingleton<_i72.ConnectivityRepository>(
       () => _i142.ConnectivityRepositoryImpl(gh<_i250.ConnectionMonitor>()),
     );
@@ -94,14 +118,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i432.RepositoryGuard>(),
       ),
     );
+    gh.factory<_i133.ActivityBloc>(
+      () => _i133.ActivityBloc(gh<_i115.ActivityRepository>()),
+    );
     gh.factory<_i148.AuthBloc>(
       () => _i148.AuthBloc(gh<_i811.AuthRepository>()),
-    );
-    gh.lazySingleton<_i657.SongRepository>(
-      () => _i657.SongRepository(
-        gh<_i957.SupabaseService>(),
-        gh<_i432.RepositoryGuard>(),
-      ),
     );
     gh.lazySingleton<_i176.UserRepository>(
       () => _i267.UserRepositoryImpl(
@@ -110,10 +131,19 @@ extension GetItInjectableX on _i174.GetIt {
       ),
     );
     gh.lazySingleton<_i537.ArtistRepository>(
-      () => _i291.ArtistRepositoryImpl(gh<_i957.SupabaseService>()),
+      () => _i291.ArtistRepositoryImpl(
+        gh<_i957.SupabaseService>(),
+        gh<_i432.RepositoryGuard>(),
+      ),
+    );
+    gh.factory<_i414.ArtistBloc>(
+      () => _i414.ArtistBloc(gh<_i537.ArtistRepository>()),
     );
     gh.factory<_i805.ConnectivityBloc>(
       () => _i805.ConnectivityBloc(gh<_i72.ConnectivityRepository>()),
+    );
+    gh.factory<_i333.SongBloc>(
+      () => _i333.SongBloc(gh<_i657.SongRepository>()),
     );
     gh.factory<_i55.UserBloc>(() => _i55.UserBloc(gh<_i176.UserRepository>()));
     return this;

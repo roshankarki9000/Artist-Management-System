@@ -1,49 +1,17 @@
-import 'package:artist_management/core/services/supabase_service.dart';
-import 'package:injectable/injectable.dart';
+import 'package:artist_management/features/songs/domain/entities/song_model.dart';
 
 import '../../../../core/error/failure/failure.dart';
 import '../../../../core/utils/either_or.dart';
-import '../../../../core/utils/repository_guard.dart';
 
-@lazySingleton
-class SongRepository {
-  final SupabaseService supabaseService;
-  final RepositoryGuard guard;
+abstract class SongRepository {
+  Future<EitherOr<Failure, List<SongModel>>> getSongs(String artistId);
+  Future<EitherOr<Failure, List<SongModel>>> getAllSongs();
+  Future<EitherOr<Failure, void>> createSong({
+    required String artistId,
+    required String title,
+    required String album,
+    required String coverUrl,
+  });
 
-  SongRepository(this.supabaseService, this.guard);
-
-  Future<EitherOr<Failure, List<Map<String, dynamic>>>> getSongs(
-    String artistId,
-  ) {
-    return guard.run(() async {
-      final res = await supabaseService.supabase
-          .from('songs')
-          .select()
-          .eq("artist_id", artistId);
-
-      return List<Map<String, dynamic>>.from(res);
-    });
-  }
-
-  Future<EitherOr<Failure, void>> createSong(
-    String artistId,
-    String title,
-    String album,
-    String coverUrl,
-  ) {
-    return guard.run(() async {
-      await supabaseService.supabase.from('songs').insert({
-        "artist_id": artistId,
-        "title": title,
-        "album": album,
-        "cover_url": coverUrl,
-      });
-    });
-  }
-
-  Future<EitherOr<Failure, void>> deleteSong(String id) {
-    return guard.run(() async {
-      await supabaseService.supabase.from('songs').delete().eq("id", id);
-    });
-  }
+  Future<EitherOr<Failure, void>> deleteSong(String id);
 }
